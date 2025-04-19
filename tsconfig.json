@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@repo/ui": ["packages/ui/src"]
+    }
+  },
+  "references": [
+    { "path": "packages/ui" },
+    { "path": "apps/web" }
+  ]
+}
