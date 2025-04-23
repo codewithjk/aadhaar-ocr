@@ -1,0 +1,2 @@
+
+export const MINIMUM_FILE_SIZE = 200000

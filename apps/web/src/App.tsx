@@ -1,20 +1,26 @@
 
 
 import './App.css'
+import ImageUploader from './components/imageUploader/ImageUploader'
+import Navbar from './components/Navbar'
 
-import {FileUpload } from "@repo/ui"
-// import { FileUpload } from '@repo/ui';
+
+
 
 function App() {
-  const handleFileUpload = () => {
+  const handleFileUpload = (image : File) => {
+    console.log("this is from app ", image)
+  }
+  const handleError = () => {
     
   }
 
   return (
     <>
-    
-    <div className="w-full max-w-4xl mx-auto min-h-96 border border-dashed bg-white dark:bg-black border-neutral-200 dark:border-neutral-800 rounded-lg">
-      <FileUpload onChange={handleFileUpload} />
+      
+<Navbar/>
+      <div className="flex items-center justify-center ">
+        <ImageUploader onError={handleError} label='Drop here' onValidFileUpload={handleFileUpload} />
     </div>
 
 
