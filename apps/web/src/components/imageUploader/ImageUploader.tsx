@@ -1,42 +1,103 @@
-import React from "react";
+import React, { useState, ChangeEvent } from "react";
+import { BiSolidCloudUpload } from "react-icons/bi";
 import { ImageUploaderProps } from "./types";
-
-import { BiUpload } from "react-icons/bi";
 import { baseValidation } from "../../utils/validators";
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({onValidFileUpload}) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({
+  onSuccessFullParse,
+  type,
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [image, setImage] = useState<File | null>(null);
 
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  const changeFile = async(event: any) => {
     try {
-      let image = event.target.files[0]
-      baseValidation(image);
-      onValidFileUpload(image)
-         // Prepare FormData
-    const formData = new FormData();
-    formData.append('image', image);
+      setError(null);
+      setLoading(true);
 
-    const response = await fetch('http://localhost:8000/api/vision/extract-text', {
-      method: 'POST',
-      body: formData
-    });
+      // Validate image
+      baseValidation(file);
+      // onValidFileUpload(file);
 
-    const result = await response.json();
-    console.log('Extracted Text:', result);
-    } catch (error) {
-      console.log("Error form catch =====> ",error)
+      // Prepare and send form data
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("type", type);
+
+      const response = await fetch(
+        "http://localhost:8000/api/vision/extract-text",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const result = await response.json();
+      if (!response.ok) {
+        // Extract error message from backend
+        const message = result?.error || "Upload failed";
+        const details = result?.details || "";
+        throw new Error(`${message}${details ? `: ${details}` : ""}`);
+      }
+
+      console.log("Extracted Text:", result);
+      setImage(file);
+      console.log(image);
+      onSuccessFullParse(result.text);
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      setError(err.message || "Something went wrong while uploading.");
+    } finally {
+      setLoading(false);
     }
-      
-    }
+  };
+
   return (
     <>
-      <input id="image" type="file" hidden onChange={(e)=>changeFile(e)} />
-      <label htmlFor="image">
-        <div className="flex items-center justify-center max-w-2xl  mx-auto  border border-dashed bg-white  border-neutral-200 dark:border-neutral-800 rounded-lg">
-          <BiUpload className="text-4xl" />
-          <div>Drop here</div>
-        </div>
-      </label>
+      {image ? (
+        <img height={400} width={600} src={URL.createObjectURL(image)} />
+      ) : (
+        <>
+          <input
+            id={type}
+            type="file"
+            hidden
+            accept="image/*"
+            onChange={handleFileChange}
+            disabled={loading}
+          />
+          <label htmlFor={type}>
+            <div
+              className={`flex flex-col items-center justify-center max-w-2xl mx-auto p-6 border border-dashed bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-lg cursor-pointer transition-all ${
+                loading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              }`}
+            >
+              {loading ? (
+                <div className="text-center text-sm text-neutral-600 dark:text-neutral-300">
+                  Uploading...
+                </div>
+              ) : (
+                <>
+                  <BiSolidCloudUpload className="text-4xl text-indigo-400" />
+                  <div className="ml-4 text-sm text-indigo-400">
+                    Click here to Upload
+                  </div>
+                </>
+              )}
+            </div>
+          </label>
+        </>
+      )}
+
+      {error && (
+        <div className="text-red-500 text-center mt-2 text-sm">{error}</div>
+      )}
     </>
   );
 };

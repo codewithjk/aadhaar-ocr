@@ -39,18 +39,18 @@
 // };
 import { Request, Response } from 'express';
 import { createWorker } from 'tesseract.js';
+import { extractAadhaarBack, extractAadhaarFront } from '../utils/dataExtractor';
 
 export const handleFileUpload = async (req: Request, res: Response): Promise<void> => {
-  const filePath = req.file?.path;
+  console.log(req.body)
+  const { type } = req.body;
+  const imageBuffer = req.file?.buffer;
 
-  if (!filePath) {
+  if (!imageBuffer) {
     res.status(400).send('No file uploaded');
     return;
   }
-
-  const worker = createWorker({
-    logger: m => console.log(m) // optional: logs progress
-  });
+  const worker = createWorker();
 
   try {
     console.log('⏳ Initializing Tesseract worker...');
@@ -59,7 +59,7 @@ export const handleFileUpload = async (req: Request, res: Response): Promise<voi
     await worker.initialize('eng+hin');
 
     console.time('OCR Process');
-    const { data } = await worker.recognize(filePath);
+    const { data } = await worker.recognize(imageBuffer);
     console.timeEnd('OCR Process');
 
     const lines = data.lines.map((line, index) => ({
@@ -70,7 +70,14 @@ export const handleFileUpload = async (req: Request, res: Response): Promise<voi
     }));
 
     console.log('✅ OCR Result:', lines);
-    res.json({ text: lines });
+    let result = {}
+    if (type == "front") {
+      result =  extractAadhaarFront(lines)
+    } else {
+      console.log("this is back")
+      result = extractAadhaarBack(lines)
+    }
+    res.json({ text: result });
   } catch (error: any) {
     console.error('🚨 OCR Error:', error.message);
     res.status(500).json({ error: 'OCR failed', details: error.message });
