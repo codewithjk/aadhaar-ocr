@@ -3,6 +3,8 @@ import { BiSolidCloudUpload } from "react-icons/bi";
 import { ImageUploaderProps } from "./types";
 import { baseValidation } from "../../utils/validators";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   onSuccessFullParse,
   type,
@@ -29,7 +31,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       formData.append("type", type);
 
       const response = await fetch(
-        "http://localhost:8000/api/vision/extract-text",
+        API_URL,
         {
           method: "POST",
           body: formData,

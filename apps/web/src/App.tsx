@@ -43,8 +43,9 @@ function App() {
           </div>
 
           <button
+           disabled={!result?.name || !result?.address}
             onClick={handleShowResult}
-            className="px-8 py-2 uppercase rounded-full bg-gradient-to-b from-blue-500 to-blue-600 text-white focus:ring-2 focus:ring-blue-400 hover:shadow-xl transition duration-200"
+            className=" pointer-coarse: px-8 py-2 uppercase rounded-full bg-gradient-to-b from-blue-500 to-blue-600 text-white focus:ring-2 focus:ring-blue-400 hover:shadow-xl transition duration-200"
           >
             parse Aadhaar
           </button>
