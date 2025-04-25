@@ -31,7 +31,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       formData.append("type", type);
 
       const response = await fetch(
-        API_URL,
+        `${API_URL}/api/vision/extract-text`,
         {
           method: "POST",
           body: formData,
