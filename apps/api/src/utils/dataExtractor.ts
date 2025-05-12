@@ -53,28 +53,69 @@ export function extractAadhaarFront(lines: OCRLine[]): AadhaarFrontData {
 }
 
 
+
+
 export function extractAadhaarBack(lines: OCRLine[]): AadhaarBackData {
-    const text = lines.map(l => l.text).join(' ').replace(/\n/g, ' ');
-    const lowerText = text.toLowerCase();
-
-    // Validate back side
-    const hasAddressKeywords = /(address|s\/o|c\/o|d\/o)/i.test(text);
-    if (!hasAddressKeywords) throw new Error('This does not appear to be the back side of an Aadhaar card.');
-
     const result: AadhaarBackData = {};
 
-    // Extract address block
-    const startIndex = lines.findIndex(l => /address|s\/o|c\/o|d\/o/i.test(l.text));
-    if (startIndex !== -1) {
-        const addressLines = lines.slice(startIndex, startIndex + 5)
-            .map(l => l.text.replace(/\n/g, '').trim())
-            .filter(l => l.length > 3);
-        result.address = addressLines.join(', ');
+    const normalizedLines = lines.map(l => l.text.trim());
+    const fullText = normalizedLines.join(' ').toLowerCase();
+
+    // Validate it's Aadhaar back
+    if (!/(address|s\/o|c\/o|d\/o)/i.test(fullText)) {
+        throw new Error('This does not appear to be the back side of an Aadhaar card.');
     }
 
-    // Pincode
-    const pinMatch = text.match(/\b\d{6}\b/);
-    result.pincode = pinMatch?.[0];
+    // Find the start of the address
+    const startIdx = normalizedLines.findIndex(line =>
+        /(address|s\/o|c\/o|d\/o)/i.test(line)
+    );
+
+    if (startIdx === -1) {
+        throw new Error('No address block found');
+    }
+
+    // Extract  address lines
+    const rawAddressLines: string[] = [];
+    for (let i = startIdx; i < normalizedLines.length; i++) {
+        const line = normalizedLines[i];
+        const isLikelyAddressLine =
+            /(address|s\/o|c\/o|d\/o)/i.test(line) ||
+            /house/i.test(line) ||
+            /\bpo\b/i.test(line) ||
+            /\d{6}/.test(line) ||
+            line.split(',').length >= 2;
+
+        if (isLikelyAddressLine) {
+            rawAddressLines.push(line);
+        }
+
+        if (rawAddressLines.length >= 6) break;
+    }
+
+    // Clean each line
+    const cleanLine = (line: string): string => {
+        return line
+            .replace(/[^\w\s,/:-]/g, '')           
+            .replace(/\b([a-zA-Z]\d|\d[a-zA-Z])\b/g, '') 
+            .replace(/\b(?:[A-Za-z]{1,2}\d{1,2}|\d{1,2}[A-Za-z]{1,2})\b/g, '') 
+            .replace(/\s+/g, ' ')                 
+            .replace(/\b(?:ei|ey|vous|le|fh|pa|tg|sn)\b/gi, '') 
+            .trim();
+    };
+
+    const cleanedLines = rawAddressLines
+        .map(cleanLine)
+        .filter(line => line.length >= 10); 
+
+    result.address = cleanedLines.join(', ');
+
+    // Extract pincode
+    const pinMatch = result.address.match(/\b\d{6}\b/);
+    if (pinMatch) {
+        result.pincode = pinMatch[0];
+    }
 
     return result;
 }
+

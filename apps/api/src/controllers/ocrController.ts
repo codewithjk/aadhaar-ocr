@@ -1,48 +1,9 @@
-// import { Request, Response } from 'express';
-// import { EasyOCR } from 'node-easyocr';
 
-// const ocr = new EasyOCR();
-
-// export const handleFileUpload = async (req: Request, res: Response): Promise<void> => {
-//   try {
-//     const filePath = req.file?.path;
-
-//     if (!filePath) {
-//       res.status(400).send('No file uploaded');
-//       return;
-//     }
-
-//     // Initialize OCR
-//     await ocr.init(['en', 'fr']);
-//     console.log('OCR initialized successfully');
-
-//     // Perform OCR
-//     console.time('OCR Process');
-//     const result = await ocr.readText(filePath);
-//     console.timeEnd('OCR Process');
-
-//     // Format result
-//     const formatted = result.map((item, index) => ({
-//       line: index + 1,
-//       text: item.text,
-//       confidence: `${(item.confidence * 100).toFixed(2)}%`,
-//       bbox: item.bbox,
-//     }));
-
-//     res.json({ text: formatted });
-//   } catch (error: any) {
-//     console.error('OCR Error:', error.message);
-//     res.status(500).json({ error: 'OCR failed', details: error.message });
-//   } finally {
-//     await ocr.close();
-//   }
-// };
 import { Request, Response } from 'express';
 import { createWorker } from 'tesseract.js';
 import { extractAadhaarBack, extractAadhaarFront } from '../utils/dataExtractor';
 
 export const handleFileUpload = async (req: Request, res: Response): Promise<void> => {
-  console.log(req.body)
   const { type } = req.body;
   const imageBuffer = req.file?.buffer;
 
@@ -54,8 +15,8 @@ export const handleFileUpload = async (req: Request, res: Response): Promise<voi
 
   try {
     console.log('⏳ Initializing Tesseract worker...');
-    await worker.load(); // ← important
-    await worker.loadLanguage('eng+hin'); // ← also correct
+    await worker.load();
+    await worker.loadLanguage('eng+hin'); 
     await worker.initialize('eng+hin');
 
     console.time('OCR Process');
